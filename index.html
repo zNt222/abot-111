@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UNIT_abot111.exe</title>
+<title>UNIT_abot111 — live techno automaton</title>
+<meta name="description" content="Un automa che scrive ed esegue codice Strudel in diretta: techno generativa sintetizzata nel tuo browser. Set di 20+ minuti, mai due volte uguale. Abtomat enviroment 2026.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAQUlEQVR4nGP8z/CfgSRAkob/DP+ZSDOegYFCDf8ZoA7EZGDR8B83A7sGRtwMnE4iAgwHDSwoPCICivZOYiQ1eQMA8nARFEkpk+wAAAAASUVORK5CYII=">
+<meta property="og:type" content="website">
+<meta property="og:title" content="UNIT_abot111 — live techno automaton">
+<meta property="og:description" content="Un automa che scrive ed esegue codice Strudel in diretta. Techno generativa nel tuo browser: entra nello stream.">
+<meta property="og:locale" content="it_IT">
+<!-- Quando il sito è online, decommenta e metti l'URL assoluto di og.png: -->
+<!-- <meta property="og:image" content="https://TUONOME.github.io/TUOREPO/og.png"> -->
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@strudel/web@1"></script>
@@ -259,6 +269,7 @@ textarea.fld{resize:none}
 </style>
 </head>
 <body>
+<noscript><p style="color:#0f0;font-family:monospace;padding:20px">UNIT_abot111 ha bisogno di JavaScript per suonare. Attivalo e ricarica.</p></noscript>
 
 <div class="topbar">
   <div class="logo98">UNIT_abot111</div>
@@ -283,7 +294,7 @@ textarea.fld{resize:none}
   <div class="win raised player">
     <div class="tbar">
       <span>◉</span>
-      <span class="tt">CAM_03 — sub-level 2 · UNIT_abot111</span>
+      <span class="tt">FRACT_CORE.exe — julia reactor</span>
       <span class="live">● LIVE</span>
       <span class="wb">_</span><span class="wb">□</span><span class="wb">✕</span>
     </div>
@@ -640,128 +651,84 @@ $('cSend').addEventListener('click',()=>{
   location.href='mailto:111@abtomat.net?subject='+encodeURIComponent($('cSub').value)+'&body='+encodeURIComponent($('cMsg').value);
 });
 
-/* ================= CAM_03 — sub-level live cam ================= */
+/* ================= FRACT_CORE — julia reactor ================= */
 const cv=$('avatar'),ctx=cv.getContext('2d');
-const CW=320,CH=240;
-const off=document.createElement('canvas');off.width=CW;off.height=CH;
+const FW=160,FH=120;
+const off=document.createElement('canvas');off.width=FW;off.height=FH;
 const ox=off.getContext('2d');
+const img=ox.createImageData(FW,FH);
 function fit(){cv.width=cv.clientWidth;cv.height=cv.clientHeight;ctx.imageSmoothingEnabled=false}
 addEventListener('resize',fit);fit();
-
-/* scanline precalcolate */
-const scanC=document.createElement('canvas');scanC.width=1;scanC.height=2;
-const scx=scanC.getContext('2d');scx.fillStyle='rgba(0,0,0,.25)';scx.fillRect(0,1,1,1);
-const scanPat=ox.createPattern(scanC,'repeat');
-
-/* macchie statiche sul muro */
-const stains=Array.from({length:9},()=>({x:Math.random()*CW,y:30+Math.random()*130,r:6+Math.random()*22,a:.05+Math.random()*.12}));
 
 const beatMs=60000/BPM;
 let t0=performance.now();
 
-/* la figura */
-const fig={x:.8,tx:.8,scale:.85,tscale:.85,gone:0,glitch:0,next:9000};
-function figThink(now){
-  if(now<fig.next)return;
-  const r=Math.random(), closer=energy<.45?.45:.25;
-  if(r<.3)fig.tx=.55+Math.random()*.3;
-  else if(r<.3+closer&&fig.tscale<2){fig.tscale+=.28}
-  else if(r<.75){fig.gone=now+ri(1200,3000);fig.glitch=fig.gone;fig.tscale=Math.min(2,fig.tscale+.4);}
-  else if(fig.tscale>1.5){fig.glitch=now+150;fig.tscale=.85;fig.tx=.8;}
-  fig.next=now+ri(12000,38000);
+const GOLD=2.399963;
+let lastBar=-1,hueBase=ri(0,360),angle=Math.random()*6.283,angleT=angle;
+let pal=new Uint8ClampedArray(0);
+function buildPal(iters,hue,e){
+  pal=new Uint8ClampedArray((iters+1)*3);
+  for(let i=0;i<=iters;i++){
+    const t=i/iters;
+    const h=(hue+t*140)%360, sat=.75+.25*e, l=Math.pow(t,.6)*.62;
+    const c=(1-Math.abs(2*l-1))*sat, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+    let r,g,b2;
+    if(h<60){r=c;g=x;b2=0}else if(h<120){r=x;g=c;b2=0}else if(h<180){r=0;g=c;b2=x}
+    else if(h<240){r=0;g=x;b2=c}else if(h<300){r=x;g=0;b2=c}else{r=c;g=0;b2=x}
+    pal[i*3]=(r+m)*255;pal[i*3+1]=(g+m)*255;pal[i*3+2]=(b2+m)*255;
+  }
 }
 
 function draw(now){
-  figThink(now);
-  fig.x+=(fig.tx-fig.x)*.004;
-  fig.scale+=(fig.tscale-fig.scale)*.01;
-
   const beatPhase=((now-t0)%beatMs)/beatMs;
   const kick=running?Math.pow(1-beatPhase,3):0;
   const e=energy;
+  const bar=Math.floor((now-t0)/(beatMs*4));
+  const iters=Math.round(22+e*18);
+  if(bar!==lastBar){
+    lastBar=bar;
+    angleT+=GOLD*(.5+Math.random()*.5);       // salto di forma a ogni bar
+    hueBase=(hueBase+37+Math.random()*40)%360; // rotazione palette
+    buildPal(iters,hueBase,e);
+  }
+  if(pal.length<(iters+1)*3)buildPal(iters,hueBase,e);
+  angle+=(angleT-angle)*.03;
 
-  /* lampadina oscillante che sfarfalla */
-  const swing=Math.sin(now*.0016)*8;
-  const bx=CW*.42+swing, by=26;
-  let lum=.5+.35*e+kick*.25*e;
-  if(Math.random()<.012)lum*=.15;
-  if(running&&e>=.95&&beatPhase<.08)lum=1;
-
-  /* stanza */
-  ox.fillStyle='#070c08';ox.fillRect(0,0,CW,CH);
-  ox.fillStyle='#0b120c';ox.fillRect(0,CH*.72,CW,CH*.28);
-  ox.strokeStyle='#101810';ox.beginPath();ox.moveTo(0,CH*.72);ox.lineTo(CW,CH*.72);ox.stroke();
-  const g=ox.createRadialGradient(bx,by,4,bx,by+40,CH*.95);
-  g.addColorStop(0,`rgba(190,220,180,${.5*lum})`);
-  g.addColorStop(.4,`rgba(120,150,110,${.22*lum})`);
-  g.addColorStop(1,'rgba(0,0,0,0)');
-  ox.fillStyle=g;ox.fillRect(0,0,CW,CH);
-  ox.strokeStyle='#1a221a';ox.beginPath();ox.moveTo(CW*.42,0);ox.lineTo(bx,by);ox.stroke();
-  ox.fillStyle=`rgba(220,240,210,${.4+.6*lum})`;
-  ox.fillRect(bx-2,by-2,4,5);
-  ox.strokeStyle='#131b13';ox.lineWidth=3;
-  ox.beginPath();ox.moveTo(0,12);ox.lineTo(CW,12);ox.stroke();
-  ox.beginPath();ox.moveTo(0,19);ox.lineTo(CW,19);ox.stroke();
-  ox.lineWidth=1;
-  ox.fillStyle='#040804';ox.fillRect(20,CH*.72-92,44,92);
-  ox.strokeStyle='#121a12';ox.strokeRect(20,CH*.72-92,44,92);
-  stains.forEach(st=>{
-    ox.fillStyle=`rgba(10,16,10,${st.a})`;
-    ox.beginPath();ox.arc(st.x,st.y,st.r,0,Math.PI*2);ox.fill();
-  });
-
-  /* figura */
-  if(now>fig.gone){
-    let fx=fig.x*CW+Math.sin(now*.0009)*1.5;
-    if(running&&e>.85&&kick>.7)fx+=(Math.random()-.5)*3;
-    const base=CH*.72, h=54*fig.scale, hr=6*fig.scale;
-    ox.fillStyle='#030603';
-    ox.beginPath();ox.arc(fx,base-h,hr,0,Math.PI*2);ox.fill();
-    ox.beginPath();
-    ox.moveTo(fx-hr*1.5,base);ox.lineTo(fx-hr*1.1,base-h+hr*1.2);
-    ox.lineTo(fx+hr*1.1,base-h+hr*1.2);ox.lineTo(fx+hr*1.5,base);
-    ox.closePath();ox.fill();
-    if(fig.scale>1.4&&Math.floor(now/1300)%9===0){
-      ox.fillStyle='rgba(200,230,190,.55)';
-      ox.fillRect(fx-2.5,base-h-1,1.5,1.5);ox.fillRect(fx+1,base-h-1,1.5,1.5);
+  const rad=.745+.05*Math.sin(now*.00021)+kick*.025*e;
+  const cRe=rad*Math.cos(angle), cIm=rad*Math.sin(angle);
+  const zoom=1.55-e*.25-kick*.18*e;           // il kick spinge dentro
+  const rot=now*.00005, cosR=Math.cos(rot), sinR=Math.sin(rot);
+  const bright=1+kick*.6*e;
+  const d=img.data;
+  let p=0;
+  for(let py=0;py<FH;py++){
+    const y0=(py-FH/2)/(FH/2)*zoom*.75;
+    for(let px=0;px<FW;px++){
+      const x0=(px-FW/2)/(FH/2)*zoom*.75;
+      let zx=x0*cosR-y0*sinR, zy=x0*sinR+y0*cosR, i=0;
+      while(i<iters&&zx*zx+zy*zy<4){
+        const t=zx*zx-zy*zy+cRe;
+        zy=2*zx*zy+cIm;zx=t;i++;
+      }
+      if(i>=iters){d[p]=0;d[p+1]=0;d[p+2]=0}
+      else{
+        const q=i*3;
+        d[p]=Math.min(255,pal[q]*bright);
+        d[p+1]=Math.min(255,pal[q+1]*bright);
+        d[p+2]=Math.min(255,pal[q+2]*bright);
+      }
+      d[p+3]=255;p+=4;
     }
   }
-
-  /* rumore video */
-  for(let i=0;i<380;i++){
-    const v=Math.random();
-    ox.fillStyle=`rgba(${180+v*60|0},${200+v*40|0},${170+v*50|0},${.04+v*.09})`;
-    ox.fillRect(Math.random()*CW|0,Math.random()*CH|0,1,1);
+  ox.putImageData(img,0,0);
+  const bp=Math.floor(((now-t0)%(beatMs*4))/beatMs);
+  for(let i2=0;i2<4;i2++){
+    ox.fillStyle=(running&&i2===bp)?'#00FF00':'#181818';
+    ox.fillRect(FW/2-14+i2*8,FH-5,5,3);
   }
-  /* tear sul kick o al rientro della figura */
-  if((running&&kick>.9&&e>.6)||now<fig.glitch){
-    const y=ri(10,CH-30),h2=ri(4,18),dx=ri(-14,14);
-    ox.drawImage(off,0,y,CW,h2,dx,y,CW,h2);
-  }
-  /* scanline + vignetta */
-  ox.fillStyle=scanPat;ox.fillRect(0,0,CW,CH);
-  const vg=ox.createRadialGradient(CW/2,CH/2,CH*.35,CW/2,CH/2,CH*.85);
-  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');
-  ox.fillStyle=vg;ox.fillRect(0,0,CW,CH);
-
-  /* OSD telecamera */
-  ox.font='9px monospace';
-  ox.fillStyle='rgba(190,220,185,.85)';
-  const d=new Date();
-  const ts=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+' '+d.toTimeString().slice(0,8);
-  ox.fillText('CAM_03  SUB-LVL 2',8,12);
-  ox.fillText(ts,8,CH-8);
-  ox.fillText('AUTO-IRIS',CW-58,CH-8);
-  if(Math.floor(now/700)%2===0){
-    ox.fillStyle='rgba(255,60,60,.9)';
-    ox.fillRect(CW-38,5,5,5);
-    ox.fillStyle='rgba(190,220,185,.85)';
-    ox.fillText('REC',CW-30,12);
-  }
-
   ctx.imageSmoothingEnabled=false;
   ctx.clearRect(0,0,cv.width,cv.height);
-  ctx.drawImage(off,0,0,CW,CH,0,0,cv.width,cv.height);
+  ctx.drawImage(off,0,0,FW,FH,0,0,cv.width,cv.height);
   if(!reduced)requestAnimationFrame(draw);
 }
 if(!reduced)requestAnimationFrame(t=>draw(t));
